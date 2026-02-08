@@ -34,7 +34,50 @@
                 <input id="nickInput" placeholder="Teu apelido..." style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:10px;">
                 <button onclick="salvarNick()" style="width:100%; padding:12px; background:#ff4f87; color:white; border:none; border-radius:10px;">Entrar</button>
             </div>
-            
+            <!-- COLE ISSO DENTRO DA TAG <body> -->
+<div id="pwa-help" style="
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff4f87, #ff6b9d);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(255,79,135,0.3);
+    z-index: 9999;
+    max-width: 90%;
+    text-align: center;
+    display: none;
+">
+    <div style="font-weight: bold; margin-bottom: 5px;">📲 Instalar App</div>
+    <div style="font-size: 0.9rem; opacity: 0.9;">
+        Toque em <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;">⋮</span> 
+        depois <span style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;">Adicionar à tela inicial</span>
+    </div>
+    <button onclick="document.getElementById('pwa-help').style.display='none'" 
+            style="position: absolute; top: 5px; right: 10px; background: none; border: none; color: white; font-size: 1.2rem;">
+        ✕
+    </button>
+</div>
+
+<script>
+// Mostra ajuda após 5 segundos
+setTimeout(() => {
+    // Verifica se não é PWA instalado
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone;
+    
+    if (!isStandalone) {
+        document.getElementById('pwa-help').style.display = 'block';
+        
+        // Esconde após 15 segundos
+        setTimeout(() => {
+            document.getElementById('pwa-help').style.display = 'none';
+        }, 15000);
+    }
+}, 5000);
+</script>
             <button id="btn-notificacao" onclick="ativarNotificacoes()" style="width:100%; margin-top:15px; padding:12px; background:#4CAF50; color:white; border:none; border-radius:10px;">
                 🔔 Ativar Notificações
             </button>
