@@ -1,150 +1,122 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nosso Espaço ❤️</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-<style>
-body{font-family:sans-serif;background:#fff5f6;margin:0;padding:15px}
-.card{background:white;padding:15px;border-radius:15px;margin-bottom:10px}
-.msg{padding:10px;border-radius:15px;margin:5px 0;max-width:75%}
-.me{background:#ff758f;color:white;margin-left:auto}
-.other{background:#fce4ec}
-.reply{font-size:0.7rem;opacity:0.7;border-left:3px solid #ff758f;padding-left:5px;margin-bottom:3px}
-</style>
-</head>
-
-<body>
-
-<h2>Nosso Espaço ❤️</h2>
-<button onclick="login()">Entrar com Google</button>
-<div id="user"></div>
-
-<div class="card">
-<h4>💭 Pensamentos</h4>
-<div id="pensamentos"></div>
-<input id="input-pensamento">
-<button onclick="enviarPensamento()">Enviar</button>
-</div>
-
-<div class="card">
-<div id="chat"></div>
-<div id="digitando"></div>
-<input id="msg" oninput="digitando()">
-<button onclick="enviar()">Enviar</button>
-</div>
-
-<script>
-const firebaseConfig={
-apiKey:"AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
-authDomain:"manuu-c23a7.firebaseapp.com",
-databaseURL:"https://manuu-c23a7-default-rtdb.firebaseio.com",
-projectId:"manuu-c23a7"
+const firebaseConfig = {
+  apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
+  authDomain: "manuu-c23a7.firebaseapp.com",
+  databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
+  projectId: "manuu-c23a7",
+  storageBucket: "manuu-c23a7.firebasestorage.app",
+  messagingSenderId: "378235951611",
+  appId: "1:378235951611:web:72c855fbb5ccdb1a84535e",
+  measurementId: "G-2V1EXW1794"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-const auth=firebase.auth();
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth();
 
-const emailsPermitidos=[
+const emailsPermitidos = [
 "lorenzemanuelly@gmail.com",
 "caua60198@gmail.com"
 ];
 
-let user=null;
-let respondendo=null;
+let usuario=null;
 
-function login(){
-const provider=new firebase.auth.GoogleAuthProvider();
-auth.signInWithPopup(provider);
-}
+window.loginGoogle = async ()=>{
+ const provider=new GoogleAuthProvider();
+ const result=await signInWithPopup(auth,provider);
+ if(!emailsPermitidos.includes(result.user.email)){
+   alert("Sem acesso");
+   auth.signOut();
+ }
+};
 
-auth.onAuthStateChanged(u=>{
-if(!u)return;
-if(!emailsPermitidos.includes(u.email)){
-alert("Sem permissão");
-auth.signOut();
-return;
-}
-user=u;
-document.getElementById("user").innerText="Logado: "+u.displayName;
-carregar();
+onAuthStateChanged(auth,(user)=>{
+ if(user){
+   usuario=user.displayName;
+   document.getElementById("status").innerText="Logado: "+usuario;
+ }
 });
 
-function carregar(){
+window.enviarChat=()=>{
+ const msg=document.getElementById("msg").value;
+ push(ref(db,"chat"),{
+  autor:usuario,
+  texto:msg,
+  hora:new Date().toLocaleTimeString()
+ });
+ document.getElementById("msg").value="";
+};
 
-db.ref("chat").on("value",s=>{
-const chat=document.getElementById("chat");
-chat.innerHTML="";
-s.forEach(c=>{
-const m=c.val();
-let div=document.createElement("div");
-div.className="msg "+(m.uid===user.uid?"me":"other");
-
-let hora=new Date(m.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-
-div.innerHTML=
-(m.reply?`<div class='reply'>${m.reply}</div>`:"")+
-m.nome+": "+m.text+
-"<br><small>"+hora+"</small>";
-
-div.onclick=()=>{respondendo=m.text};
-chat.appendChild(div);
-});
+onChildAdded(ref(db,"chat"),(data)=>{
+ const d=data.val();
+ document.getElementById("chat").innerHTML+=
+ `<div><b>${d.autor}</b> (${d.hora}): ${d.texto}</div>`;
 });
 
-db.ref("pensamentos").on("value",s=>{
-const area=document.getElementById("pensamentos");
-area.innerHTML="";
-s.forEach(c=>{
-const p=c.val();
-area.innerHTML+=`<div>${p.nome}: ${p.text}</div>`;
-});
+window.enviarPensamento=()=>{
+ const msg=document.getElementById("pensamento").value;
+ push(ref(db,"pensamentos"),{
+  autor:usuario,
+  texto:msg,
+  hora:new Date().toLocaleTimeString()
+ });
+ document.getElementById("pensamento").value="";
+};
+
+onChildAdded(ref(db,"pensamentos"),(data)=>{
+ const d=data.val();
+ document.getElementById("pensamentos").innerHTML+=
+ `<div>${d.autor} (${d.hora}): ${d.texto}</div>`;
 });
 
-db.ref("digitando").on("value",s=>{
-document.getElementById("digitando").innerText=
-s.val() && s.val()!=user.displayName
-? s.val()+" está digitando..."
-:"";
+window.enviarLista=()=>{
+ const msg=document.getElementById("lista").value;
+ push(ref(db,"listaLivre"),{
+  autor:usuario,
+  texto:msg,
+  hora:new Date().toLocaleTimeString()
+ });
+ document.getElementById("lista").value="";
+};
+
+onChildAdded(ref(db,"listaLivre"),(data)=>{
+ const d=data.val();
+ document.getElementById("listas").innerHTML+=
+ `<div>• ${d.texto} - ${d.autor} (${d.hora})</div>`;
 });
-
-}
-
-function enviar(){
-const t=document.getElementById("msg").value;
-if(!t)return;
-db.ref("chat").push({
-uid:user.uid,
-nome:user.displayName,
-text:t,
-reply:respondendo,
-time:Date.now()
-});
-respondendo=null;
-document.getElementById("msg").value="";
-db.ref("digitando").set("");
-}
-
-function enviarPensamento(){
-const t=document.getElementById("input-pensamento").value;
-if(!t)return;
-db.ref("pensamentos").push({
-nome:user.displayName,
-text:t
-});
-document.getElementById("input-pensamento").value="";
-}
-
-function digitando(){
-db.ref("digitando").set(user.displayName);
-}
 </script>
+
+</head>
+<body>
+
+<h2>Nosso Espaço ❤️</h2>
+<button onclick="loginGoogle()">Entrar com Google</button>
+<p id="status"></p>
+
+<h3>💬 Chat</h3>
+<div id="chat"></div>
+<input id="msg">
+<button onclick="enviarChat()">Enviar</button>
+
+<h3>💭 Pensamentos</h3>
+<div id="pensamentos"></div>
+<input id="pensamento">
+<button onclick="enviarPensamento()">Enviar</button>
+
+<h3>📋 Lista Livre</h3>
+<div id="listas"></div>
+<input id="lista">
+<button onclick="enviarLista()">Adicionar</button>
 
 </body>
 </html>
