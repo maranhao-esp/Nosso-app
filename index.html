@@ -9,71 +9,35 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-messaging-compat.js"></script>
 
     <style>
         :root { --p: #ff4f87; --bg: #fff5f8; }
-        
-        /* Configuração para o ecrã não rolar loucamente com o teclado */
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background: var(--bg);
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        /* Estrutura Principal */
-        #app-wrapper {
-            display: flex;
-            flex-direction: column;
-            height: 100dvh; /* Altura dinâmica */
-        }
-
-        #login-screen { 
-            position: fixed; inset: 0; background: var(--bg); z-index: 10000; 
-            display: flex; align-items: center; justify-content: center; 
-        }
-        .login-card { background: white; padding: 30px; border-radius: 30px; text-shadow: none; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 85%; max-width: 350px; }
-
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); font-family: 'Segoe UI', sans-serif; }
+        #app-wrapper { display: flex; flex-direction: column; height: 100dvh; }
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 30px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 85%; max-width: 350px; }
         header { background: white; padding: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
         #status-online { font-size: 0.7rem; color: #2ecc71; font-weight: bold; }
-
-        /* Sistema de Abas */
         .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 10px; }
         .active-tab { display: flex; }
-
-        /* Área do Chat */
-        #chatBox { 
-            flex: 1; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            padding: 5px;
-            scroll-behavior: smooth;
-        }
-
+        #chatBox { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 5px; scroll-behavior: smooth; }
         .msg { max-width: 80%; padding: 12px; border-radius: 20px; font-size: 0.9rem; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
         .msg.sent { align-self: flex-end; background: var(--p); color: white; border-bottom-right-radius: 2px; }
         .msg.received { align-self: flex-start; background: white; border: 1px solid #f0f0f0; border-bottom-left-radius: 2px; }
         .msg-name { font-size: 0.65rem; font-weight: bold; margin-bottom: 3px; display: block; opacity: 0.8; }
-
-        /* Barra de Escrita (Sempre visível) */
         .input-container { padding: 10px; background: white; border-top: 1px solid #eee; flex-shrink: 0; }
         .input-area { display: flex; gap: 8px; background: #f9f9f9; padding: 5px 10px; border-radius: 30px; align-items: center; }
         input { flex: 1; border: none; padding: 10px; outline: none; background: transparent; font-size: 1rem; }
-        
         .btn-circle { background: var(--p); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-
-        /* Menu Inferior */
         .tab-bar { background: white; display: flex; justify-content: space-around; padding: 5px 0; border-top: 1px solid #eee; height: 60px; flex-shrink: 0; }
         .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.75rem; flex: 1; cursor: pointer; }
         .tab-item.active { color: var(--p); }
-
-        /* Estilo das Listas */
         .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
+        
+        /* Estilo para o botão de notificação */
+        #btn-notificacao { background: #f0f0f0; border: none; padding: 10px; border-radius: 10px; width: 100%; margin-top: 10px; font-weight: bold; color: #666; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -84,12 +48,14 @@
             <button id="btn-google" style="width:100%; padding:15px; border-radius:15px; background:white; border:1px solid #ddd; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Entrar com Google
             </button>
-            <button id="btn-notificacao" onclick="ativarNotificacoes()">🔔 ATIVAR NOTIFICAÇÕES</button>
-<div id="status" style="font-size: 12px; color: #888;"></div>
+            
             <div id="nickname-box" style="display:none; margin-top:20px;">
                 <input id="nickInput" placeholder="Teu apelido..." style="border: 1px solid #eee; width: 85%; margin-bottom:10px; border-radius:10px; padding: 12px;">
                 <button onclick="salvarNick()" style="background: var(--p); color:white; border:none; padding:12px; border-radius:10px; width:100%; font-weight:bold;">Entrar</button>
             </div>
+
+            <button id="btn-notificacao" onclick="ativarNotificacoes()">🔔 ATIVAR NOTIFICAÇÕES</button>
+            <div id="status-aviso" style="font-size: 11px; margin-top: 5px; color: #999;"></div>
         </div>
     </div>
 
@@ -156,6 +122,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
+    const messaging = firebase.messaging();
 
     let user = null, myNick = localStorage.getItem('v3_nick'), rMsg = null;
 
@@ -182,7 +149,6 @@
     function iniciar() {
         document.getElementById('login-screen').style.display = "none";
         
-        // Contador
         const d1 = new Date("2025-02-26");
         setInterval(() => {
             const dias = Math.floor((new Date() - d1) / 86400000);
@@ -191,12 +157,34 @@
 
         carregarDados();
         
-        // AJUSTE DE TECLADO: Sempre rolar para baixo ao focar no input
         document.getElementById('chatInput').addEventListener('focus', () => {
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 300);
+            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 300);
         });
+    }
+
+    async function ativarNotificacoes() {
+        const statusDiv = document.getElementById('status-aviso');
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const token = await messaging.getToken({ 
+                    vapidKey: 'BPn6ATIl_Rjnxsn8yiRCQBZ2XtisDs5qIW6hiq391z6YTYEtKyY9OQfVAgs2y6v3siAamzjyRDjTMrDSzbm9uY0' 
+                });
+                if (token) {
+                    await db.ref('tokens_pwa').child('usuario_principal').set(token);
+                    statusDiv.innerText = "✅ Notificações Ativas!";
+                    alert("Sucesso!");
+                }
+            } else {
+                alert("Permite as notificações no Chrome!");
+            }
+        } catch (error) {
+            statusDiv.innerText = "Erro ao ativar.";
+        }
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('firebase-messaging-sw.js');
     }
 
     function mudarTab(t, b) {
@@ -208,7 +196,6 @@
     }
 
     function carregarDados() {
-        // Chat
         db.ref('chat_v3').on('value', s => {
             chatBox.innerHTML = "";
             s.forEach(child => {
@@ -226,7 +213,6 @@
             if(s.exists()) document.getElementById('ping').play().catch(()=>{});
         });
 
-        // Mural
         db.ref('mural_v3').on('value', s => {
             muralBox.innerHTML = "";
             s.forEach(child => {
@@ -235,7 +221,6 @@
             });
         });
 
-        // Listas
         db.ref('listas_v3').on('value', s => {
             document.getElementById('area-listas').innerHTML = "";
             s.forEach(pasta => {
@@ -256,7 +241,6 @@
             });
         });
 
-        // Digitando
         db.ref('status_v3/dig').on('value', s => {
             const d = s.val();
             document.getElementById('digitando-aviso').innerText = (d && d.u !== myNick && d.ativo) ? ` - ${d.u} está a escrever...` : "";
@@ -291,41 +275,5 @@
     function cancelarRep() { rMsg = null; document.getElementById('reply-box').style.display = "none"; }
     function apagar(c) { if(confirm("Apagar?")) db.ref(c).remove(); }
 </script>
-    <script>
-    // Se o firebaseConfig já estiver no seu código, não precisa repetir, 
-    // mas garanta que essas linhas abaixo existam:
-    const db = firebase.database();
-    const messaging = firebase.messaging();
-
-    async function ativarNotificacoes() {
-        const statusDiv = document.getElementById('status');
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const token = await messaging.getToken({ 
-                    vapidKey: 'BPn6ATIl_Rjnxsn8yiRCQBZ2XtisDs5qIW6hiq391z6YTYEtKyY9OQfVAgs2y6v3siAamzjyRDjTMrDSzbm9uY0' 
-                });
-                if (token) {
-                    // Salva o token no seu banco de dados
-                    await db.ref('tokens_pwa').child('usuario_principal').set(token);
-                    statusDiv.innerText = "✅ Notificações Ativas!";
-                    alert("Sucesso! Agora o app está conectado.");
-                }
-            } else {
-                alert("Você precisa permitir as notificações no navegador.");
-            }
-        } catch (error) {
-            console.error(error);
-            statusDiv.innerText = "Erro ao ativar.";
-        }
-    }
-
-    // REGISTRO DO SERVICE WORKER (MUITO IMPORTANTE)
-    if ('serviceWorker' in navigator) {
-        // Use o nome do arquivo que você criou no passo anterior
-        navigator.serviceWorker.register('firebase-messaging-sw.js');
-    }
-                                                     </script>
-    
 </body>
 </html>
