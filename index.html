@@ -3,283 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nosso Espaço ❤️</title>
+    <title>Nosso Mundo ❤️</title>
     <link rel="manifest" href="manifest.json">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary: #ff4f87;
-            --secondary: #ff85a2;
             --bg: #fff5f8;
-            --card-bg: #ffffff;
-            --msg-sent: #ff4f87;
-            --msg-received: #ffffff;
+            --card: #ffffff;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: var(--bg);
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+            padding-bottom: 80px; /* Espaço para a Tab Bar */
+            color: #444;
         }
 
-        /* TELA DE LOGIN ESTILIZADA */
+        /* TELA DE LOGIN */
         #login-screen {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        .login-card {
-            background: white;
-            padding: 30px;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(255, 79, 135, 0.2);
-            text-align: center;
-            width: 100%;
-            max-width: 320px;
-        }
+        .login-card { background: white; padding: 30px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 80%; }
 
         /* HEADER */
-        .header {
-            background: white;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            border-bottom: 1px solid #ffeaf2;
-        }
+        header { background: white; padding: 15px; text-align: center; sticky: top; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        #status-online { font-size: 0.7rem; color: #2ecc71; font-weight: bold; }
 
-        .status-dot {
-            height: 10px;
-            width: 10px;
-            background: #2ecc71;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-        }
+        /* NAVEGAÇÃO POR ABAS (Estilo Mobile) */
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .active-tab { display: block; }
 
-        /* CONTAINER PRINCIPAL */
-        .main-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 15px;
-            box-shadow: 0 5px 15px rgba(255, 79, 135, 0.05);
+        .tab-bar {
+            position: fixed; bottom: 0; width: 100%; background: white;
+            display: flex; justify-content: space-around; padding: 12px 0;
+            border-top: 1px solid #eee; z-index: 1000;
         }
+        .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.8rem; }
+        .tab-item.active { color: var(--primary); }
 
-        /* CHAT */
-        #chatBox {
-            height: 300px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 5px;
-        }
-
-        .msg {
-            max-width: 85%;
-            padding: 10px 15px;
-            border-radius: 18px;
-            font-size: 0.95rem;
-            position: relative;
-            line-height: 1.4;
-        }
-
-        .msg.sent {
-            align-self: flex-end;
-            background: var(--msg-sent);
-            color: white;
-            border-bottom-right-radius: 2px;
-        }
-
-        .msg.received {
-            align-self: flex-start;
-            background: var(--msg-received);
-            color: #333;
-            border: 1px solid #f0f0f0;
-            border-bottom-left-radius: 2px;
-        }
-
-        .msg small { display: block; font-size: 0.65rem; margin-top: 4px; opacity: 0.7; }
+        /* CARDS E MENSAGENS */
+        .card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        
+        #chatBox { height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 18px; position: relative; font-size: 0.9rem; }
+        .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+        .msg.received { align-self: flex-start; background: white; border: 1px solid #f0f0f0; border-bottom-left-radius: 2px; }
+        
+        .reply-preview { background: #f0f0f0; border-left: 3px solid var(--primary); padding: 5px; margin-bottom: 5px; border-radius: 5px; font-size: 0.8rem; display: none; }
 
         /* INPUTS */
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        input {
-            flex: 1;
-            padding: 12px 15px;
-            border-radius: 20px;
-            border: 1px solid #eee;
-            outline: none;
-            background: #fdfdfd;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* REPLY BOX */
-        .reply-box {
-            background: #f8f8f8;
-            border-left: 4px solid var(--primary);
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: none;
-            position: relative;
-        }
-
-        .cancel-btn { position: absolute; right: 5px; top: 2px; cursor: pointer; color: #999; }
+        .input-area { display: flex; gap: 8px; margin-top: 10px; }
+        input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #eee; outline: none; }
+        button.send-btn { background: var(--primary); border: none; color: white; padding: 10px 15px; border-radius: 50%; width: 45px; height: 45px; }
 
         /* LISTAS */
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #f9f9f9;
-        }
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
+        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: var(--primary); margin-bottom: 5px;">Nosso Mundo ❤️</h2>
-            <p style="font-size: 0.9rem; color: #888;">Entre para continuar</p>
-            <button id="loginBtn" style="width: 100%; margin-top: 10px;">Entrar com Google</button>
-            
-            <div id="nickname-area" style="display:none; margin-top: 20px;">
-                <input type="text" id="nickInput" placeholder="Seu apelido..." style="width: 80%; margin-bottom: 10px;">
-                <button onclick="salvarNick()" style="width: 100%;">Começar</button>
+            <h2 style="color: var(--primary)">Nosso Espaço ❤️</h2>
+            <button id="btnGoogle" style="width:100%; padding:12px; border-radius:10px; background:white; border:1px solid #ddd; cursor:pointer;">Entrar com Google</button>
+            <div id="area-nick" style="display:none; margin-top:20px;">
+                <input type="text" id="inputNick" placeholder="Seu apelido..." style="width:80%">
+                <button onclick="salvarNick()" style="margin-top:10px; background: var(--primary); color:white; border:none; padding:10px 20px; border-radius:10px;">Entrar</button>
             </div>
         </div>
     </div>
 
-    <div class="header">
-        <h3 id="contador" style="margin:0; color: var(--primary); font-size: 1rem;">❤️ 0 dias</h3>
-        <div style="font-size: 0.7rem; color: #666; margin-top: 3px;">
-            <span class="status-dot"></span> <span id="onlineStatus">Online agora</span>
+    <header>
+        <div id="contador" style="font-weight:bold; color: var(--primary)"></div>
+        <div id="status-online">● Online <span id="txt-digitando" style="color:#aaa; font-style:italic"></span></div>
+    </header>
+
+    <div id="tab-chat" class="tab-content active-tab">
+        <div id="chatBox"></div>
+        <div id="reply-preview" class="reply-preview">
+            <span id="reply-text"></span> 
+            <span onclick="cancelarResposta()" style="float:right; cursor:pointer">✕</span>
+        </div>
+        <div class="input-area">
+            <input id="chatInput" placeholder="Mensagem..." oninput="avisarDigitando()">
+            <button class="send-btn" onclick="enviarChat()">✈️</button>
         </div>
     </div>
 
-    <div class="main-container">
+    <div id="tab-pensamentos" class="tab-content">
+        <div id="pensamentosBox"></div>
         <div class="card">
-            <h3>💬 Chat</h3>
-            <div id="chatBox"></div>
-            <div id="replyPreview" class="reply-box">
-                <span class="cancel-btn" onclick="fecharResposta()">✕</span>
-                <small id="replyTxt" style="color: #666;"></small>
-            </div>
-            <div class="input-group">
-                <input id="chatInput" placeholder="Mensagem...">
-                <button onclick="enviarChat()">✈️</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>💭 Pensamentos</h3>
-            <div id="pensamentosBox"></div>
-            <div class="input-group">
-                <input id="pensamentoInput" placeholder="No que pensa?">
-                <button onclick="enviarPensamento()">✨</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>📋 Nossa Lista</h3>
-            <div id="listaBox"></div>
-            <div class="input-group">
-                <input id="listaInput" placeholder="Adicionar...">
-                <button onclick="enviarLista()">➕</button>
-            </div>
+            <input id="pensamentoInput" placeholder="No que está pensando?" style="width:70%">
+            <button onclick="enviarPensamento()" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:10px">✨</button>
         </div>
     </div>
 
-    <audio id="ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <div id="tab-listas" class="tab-content">
+        <div class="card">
+            <input id="novaListaInput" placeholder="Nome da nova lista (ex: Filmes)" style="width:65%">
+            <button onclick="criarLista()" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:10px">Criar Lista</button>
+        </div>
+        <div id="area-listas"></div>
+    </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <nav class="tab-bar">
+        <button class="tab-item active" onclick="mudarTab('chat', this)">💬 Chat</button>
+        <button class="tab-item" onclick="mudarTab('pensamentos', this)">💭 Mural</button>
+        <button class="tab-item" onclick="mudarTab('listas', this)">📋 Listas</button>
+    </nav>
 
+<script>
+    // SUAS CONFIGURAÇÕES
     const firebaseConfig = {
-      apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
-      authDomain: "manuu-c23a7.firebaseapp.com",
-      databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
-      projectId: "manuu-c23a7",
-      storageBucket: "manuu-c23a7.firebasestorage.app",
-      messagingSenderId: "378235951611",
-      appId: "1:378235951611:web:72c855fbb5ccdb1a84535e",
-      measurementId: "G-2V1EXW1794"
+        apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
+        authDomain: "manuu-c23a7.firebaseapp.com",
+        databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
+        projectId: "manuu-c23a7",
+        storageBucket: "manuu-c23a7.firebasestorage.app",
+        messagingSenderId: "378235951611",
+        appId: "1:378235951611:web:72c855fbb5ccdb1a84535e"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
 
     let userObj = null;
-    let myNick = localStorage.getItem('userNick');
-    let msgParaResponder = null;
+    let meuNick = localStorage.getItem('apelido');
+    let replyMsg = null;
 
     // LOGIN
-    loginBtn.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    btnGoogle.onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 
-    onAuthStateChanged(auth, (u) => {
-        if (u) {
+    auth.onAuthStateChanged(u => {
+        if(u) {
             userObj = u;
-            if (!myNick) {
-                loginBtn.style.display = "none";
-                document.getElementById('nickname-area').style.display = "block";
+            if(!meuNick) {
+                btnGoogle.style.display = "none";
+                document.getElementById('area-nick').style.display = "block";
             } else {
-                entrarNoApp();
+                iniciarApp();
             }
         }
     });
 
-    window.salvarNick = () => {
-        const val = nickInput.value.trim();
-        if(val) {
-            myNick = val;
-            localStorage.setItem('userNick', val);
-            entrarNoApp();
-        }
+    function salvarNick() {
+        const n = inputNick.value.trim();
+        if(n) { meuNick = n; localStorage.setItem('apelido', n); iniciarApp(); }
     }
 
-    function entrarNoApp() {
+    function iniciarApp() {
         document.getElementById('login-screen').style.display = "none";
-        setDoc(doc(db, "presenca", userObj.uid), { nome: myNick, status: "online", hora: serverTimestamp() });
-        carregarDados();
-    }
-
-    // CARREGAR TUDO
-    function carregarDados() {
+        
         // Contador
         const d1 = new Date("2025-01-26");
         setInterval(() => {
@@ -287,73 +170,109 @@
             document.getElementById('contador').innerText = `❤️ ${dias} dias juntos`;
         }, 1000);
 
-        // Chat
-        onSnapshot(query(collection(db, "chat"), orderBy("time", "asc")), snap => {
+        carregarDados();
+    }
+
+    // NAVEGAÇÃO
+    function mudarTab(tab, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
+        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active-tab');
+        btn.classList.add('active');
+    }
+
+    // LÓGICA DO CHAT (REALTIME DATABASE - SEMPRE FICA SALVO)
+    function carregarDados() {
+        db.ref('chat').on('value', snap => {
             chatBox.innerHTML = "";
             snap.forEach(d => {
-                const m = d.data();
+                const m = d.val();
                 const souEu = m.uid === userObj.uid;
                 chatBox.innerHTML += `
-                    <div class="msg ${souEu ? 'sent' : 'received'}" onclick="prepararResposta('${m.texto}')">
-                        ${m.reply ? `<div style="font-size:0.7rem; background:rgba(0,0,0,0.05); padding:3px; margin-bottom:4px;">${m.reply}</div>` : ''}
-                        <b>${m.nome}:</b> ${m.texto}
-                        <small>${m.hora || ''} ${souEu ? `<span onclick="event.stopPropagation(); deletar('chat', '${d.id}')">🗑️</span>` : ''}</small>
+                    <div class="msg ${souEu ? 'sent' : 'received'}" onclick="prepararRep('${m.texto}')">
+                        ${m.reply ? `<div style="font-size:0.7rem; opacity:0.6; border-left:2px solid white; padding-left:5px;">${m.reply}</div>` : ''}
+                        <small style="font-size:0.6rem; display:block;">${m.nome}</small>
+                        ${m.texto}
+                        ${souEu ? `<span onclick="event.stopPropagation(); deletar('chat/${d.key}')" style="font-size:0.7rem; margin-left:10px; cursor:pointer">🗑️</span>` : ''}
                     </div>`;
             });
             chatBox.scrollTop = chatBox.scrollHeight;
         });
 
-        // Listas
-        onSnapshot(query(collection(db, "pensamentos"), orderBy("time", "desc")), snap => {
+        // Mural
+        db.ref('mural').on('value', snap => {
             pensamentosBox.innerHTML = "";
-            snap.forEach(d => { pensamentosBox.innerHTML += `<div class="item-row"><span>${d.data().texto}</span><span onclick="deletar('pensamentos', '${d.id}')">✅</span></div>`; });
+            snap.forEach(d => {
+                const p = d.val();
+                pensamentosBox.innerHTML += `<div class="card"><b>${p.nome}:</b><br>${p.texto} <span onclick="deletar('mural/${d.key}')" style="float:right">✅</span></div>`;
+            });
         });
 
-        onSnapshot(query(collection(db, "lista"), orderBy("time", "desc")), snap => {
-            listaBox.innerHTML = "";
-            snap.forEach(d => { listaBox.innerHTML += `<div class="item-row"><span>• ${d.data().texto}</span><span onclick="deletar('lista', '${d.id}')">✅</span></div>`; });
+        // Listas Dinâmicas
+        db.ref('pastas').on('value', snap => {
+            area-listas.innerHTML = "";
+            snap.forEach(pasta => {
+                const nomePasta = pasta.key;
+                let itensHtml = "";
+                if(pasta.child('itens').exists()){
+                    pasta.child('itens').forEach(it => {
+                        itensHtml += `<div class="item-row"><span>${it.val().t}</span><span onclick="deletar('pastas/${nomePasta}/itens/${it.key}')">✅</span></div>`;
+                    });
+                }
+                area-listas.innerHTML += `
+                    <div class="card">
+                        <div class="list-header"><b>${nomePasta}</b> <button onclick="deletar('pastas/${nomePasta}')" style="font-size:0.6rem; background:none; color:red; border:none;">Excluir</button></div>
+                        ${itensHtml}
+                        <div class="input-area"><input id="in-${nomePasta}" placeholder="Item..."><button onclick="addItem('${nomePasta}')">+</button></div>
+                    </div>`;
+            });
+        });
+
+        // Digitando
+        db.ref('status/digitando').on('value', snap => {
+            const d = snap.val();
+            document.getElementById('txt-digitando').innerText = (d && d.user !== meuNick && d.status) ? ` - ${d.user} está digitando...` : "";
         });
     }
 
-    // ENVIAR
-    window.enviarChat = async () => {
+    // AÇÕES
+    function enviarChat() {
         const t = chatInput.value;
         if(!t) return;
+        db.ref('chat').push({ uid: userObj.uid, nome: meuNick, texto: t, reply: replyMsg });
         chatInput.value = "";
-        await addDoc(collection(db, "chat"), { uid: userObj.uid, nome: myNick, texto: t, time: serverTimestamp(), hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), reply: msgParaResponder });
-        fecharResposta();
+        cancelarResposta();
+        db.ref('status/digitando').set({ status: false });
     }
 
-    window.enviarPensamento = async () => {
+    function enviarPensamento() {
         const t = pensamentoInput.value;
-        if(!t) return;
-        pensamentoInput.value = "";
-        await addDoc(collection(db, "pensamentos"), { texto: t, time: serverTimestamp() });
+        if(t) { db.ref('mural').push({ nome: meuNick, texto: t }); pensamentoInput.value = ""; }
     }
 
-    window.enviarLista = async () => {
-        const t = listaInput.value;
-        if(!t) return;
-        listaInput.value = "";
-        await addDoc(collection(db, "lista"), { texto: t, time: serverTimestamp() });
+    function criarLista() {
+        const n = novaListaInput.value;
+        if(n) { db.ref('pastas/' + n).set({ criadoPor: meuNick }); novaListaInput.value = ""; }
     }
 
-    // AUXILIARES
-    window.prepararResposta = (txt) => {
-        msgParaResponder = txt;
-        replyTxt.innerText = "Respondendo: " + txt;
-        replyPreview.style.display = "block";
-        chatInput.focus();
+    function addItem(pasta) {
+        const v = document.getElementById('in-' + pasta).value;
+        if(v) { db.ref('pastas/' + pasta + '/itens').push({ t: v }); document.getElementById('in-' + pasta).value = ""; }
     }
 
-    window.fecharResposta = () => {
-        msgParaResponder = null;
-        replyPreview.style.display = "none";
+    function avisarDigitando() {
+        db.ref('status/digitando').set({ user: meuNick, status: chatInput.value.length > 0 });
     }
 
-    window.deletar = async (col, id) => {
-        if(confirm("Concluído/Apagar?")) await deleteDoc(doc(db, col, id));
+    function prepararRep(txt) {
+        replyMsg = txt;
+        document.getElementById('reply-text').innerText = "Respondendo: " + txt;
+        document.getElementById('reply-preview').style.display = "block";
     }
+
+    function cancelarResposta() { replyMsg = null; document.getElementById('reply-preview').style.display = "none"; }
+
+    function deletar(caminho) { if(confirm("Deseja concluir/apagar?")) db.ref(caminho).remove(); }
 </script>
 </body>
 </html>
