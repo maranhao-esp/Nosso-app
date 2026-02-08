@@ -11,12 +11,10 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('Mensagem recebida em segundo plano:', payload);
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
-        icon: 'https://cdn-icons-png.flaticon.com/512/2589/2589175.png',
-        badge: 'https://cdn-icons-png.flaticon.com/512/2589/2589175.png'
+        icon: 'https://cdn-icons-png.flaticon.com/512/2589/2589175.png'
     };
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
