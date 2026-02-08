@@ -9,119 +9,106 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        :root {
-            --primary: #ff4f87;
-            --bg: #fff5f8;
-            --card: #ffffff;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: var(--bg);
-            margin: 0;
-            padding-bottom: 80px; /* Espaço para a Tab Bar */
-            color: #444;
-        }
-
-        /* TELA DE LOGIN */
-        #login-screen {
-            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .login-card { background: white; padding: 30px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 80%; }
-
+        :root { --p: #ff4f87; --bg: #fff5f8; --c: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; overflow-x: hidden; }
+        
+        /* LOGIN SCREEN */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 30px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 85%; max-width: 350px; }
+        
         /* HEADER */
-        header { background: white; padding: 15px; text-align: center; sticky: top; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        #status-online { font-size: 0.7rem; color: #2ecc71; font-weight: bold; }
+        header { background: white; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 900; }
+        #status-online { font-size: 0.7rem; color: #2ecc71; font-weight: bold; margin-top: 5px; }
 
-        /* NAVEGAÇÃO POR ABAS (Estilo Mobile) */
-        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        /* TAB SYSTEM */
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
         .active-tab { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* TAB BAR (MOBILE STYLE) */
+        .tab-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; z-index: 1000; height: 60px; }
+        .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.8rem; flex: 1; cursor: pointer; transition: 0.3s; }
+        .tab-item.active { color: var(--p); transform: translateY(-3px); }
 
-        .tab-bar {
-            position: fixed; bottom: 0; width: 100%; background: white;
-            display: flex; justify-content: space-around; padding: 12px 0;
-            border-top: 1px solid #eee; z-index: 1000;
-        }
-        .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.8rem; }
-        .tab-item.active { color: var(--primary); }
-
-        /* CARDS E MENSAGENS */
-        .card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        
-        #chatBox { height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 18px; position: relative; font-size: 0.9rem; }
-        .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+        /* MESSAGES */
+        #chatBox { height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 5px; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 20px; font-size: 0.9rem; position: relative; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .msg.sent { align-self: flex-end; background: var(--p); color: white; border-bottom-right-radius: 2px; }
         .msg.received { align-self: flex-start; background: white; border: 1px solid #f0f0f0; border-bottom-left-radius: 2px; }
-        
-        .reply-preview { background: #f0f0f0; border-left: 3px solid var(--primary); padding: 5px; margin-bottom: 5px; border-radius: 5px; font-size: 0.8rem; display: none; }
+        .msg-name { font-size: 0.65rem; font-weight: bold; margin-bottom: 3px; display: block; opacity: 0.8; }
 
         /* INPUTS */
-        .input-area { display: flex; gap: 8px; margin-top: 10px; }
-        input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #eee; outline: none; }
-        button.send-btn { background: var(--primary); border: none; color: white; padding: 10px 15px; border-radius: 50%; width: 45px; height: 45px; }
+        .input-area { display: flex; gap: 8px; background: white; padding: 10px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        input { flex: 1; border: none; padding: 10px; outline: none; background: transparent; font-size: 0.95rem; }
+        button.btn-circle { background: var(--p); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
 
-        /* LISTAS */
-        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
-        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
+        /* LISTS */
+        .card { background: white; border-radius: 20px; padding: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); border: 1px solid #fff0f6; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #fdf0f5; padding-bottom: 8px; margin-bottom: 10px; color: var(--p); }
+        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #fafafa; font-size: 0.9rem; }
+        .btn-check { color: #2ecc71; cursor: pointer; font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: var(--primary)">Nosso Espaço ❤️</h2>
-            <button id="btnGoogle" style="width:100%; padding:12px; border-radius:10px; background:white; border:1px solid #ddd; cursor:pointer;">Entrar com Google</button>
-            <div id="area-nick" style="display:none; margin-top:20px;">
-                <input type="text" id="inputNick" placeholder="Seu apelido..." style="width:80%">
-                <button onclick="salvarNick()" style="margin-top:10px; background: var(--primary); color:white; border:none; padding:10px 20px; border-radius:10px;">Entrar</button>
+            <h2 style="color: var(--p); margin: 0;">Nosso Espaço ❤️</h2>
+            <p style="color: #888; font-size: 0.9rem;">Faz login para entrar</p>
+            <button id="btn-google" style="width:100%; padding:15px; border-radius:15px; background:white; border:1px solid #ddd; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Entrar com Google
+            </button>
+            <div id="nickname-box" style="display:none; margin-top:20px;">
+                <input id="nickInput" placeholder="Teu apelido..." style="border: 1px solid #eee; width: 85%; margin-bottom:10px; background: #f9f9f9; border-radius:10px; padding: 12px;">
+                <button onclick="salvarNick()" style="background: var(--p); color:white; border:none; padding:12px; border-radius:10px; width:100%; font-weight:bold;">Começar</button>
             </div>
         </div>
     </div>
 
     <header>
-        <div id="contador" style="font-weight:bold; color: var(--primary)"></div>
-        <div id="status-online">● Online <span id="txt-digitando" style="color:#aaa; font-style:italic"></span></div>
+        <div id="contador" style="font-weight:bold; color: var(--p); font-size: 1.1rem;"></div>
+        <div id="status-online">● Online <span id="digitando-aviso" style="color:#ff85a2; font-style:italic; font-weight:normal"></span></div>
     </header>
 
     <div id="tab-chat" class="tab-content active-tab">
         <div id="chatBox"></div>
-        <div id="reply-preview" class="reply-preview">
-            <span id="reply-text"></span> 
-            <span onclick="cancelarResposta()" style="float:right; cursor:pointer">✕</span>
+        <div id="reply-box" style="display:none; background:#eee; padding:8px; border-radius:10px; margin-bottom:5px; font-size:0.8rem; border-left:4px solid var(--p)">
+            <span id="reply-text"></span> <span onclick="cancelarRep()" style="float:right; cursor:pointer">✕</span>
         </div>
         <div class="input-area">
-            <input id="chatInput" placeholder="Mensagem..." oninput="avisarDigitando()">
-            <button class="send-btn" onclick="enviarChat()">✈️</button>
+            <input id="chatInput" placeholder="Escreve aqui..." oninput="digitando()">
+            <button class="btn-circle" onclick="enviarChat()">✈</button>
         </div>
     </div>
 
-    <div id="tab-pensamentos" class="tab-content">
-        <div id="pensamentosBox"></div>
-        <div class="card">
-            <input id="pensamentoInput" placeholder="No que está pensando?" style="width:70%">
-            <button onclick="enviarPensamento()" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:10px">✨</button>
+    <div id="tab-mural" class="tab-content">
+        <div id="muralBox"></div>
+        <div class="input-area">
+            <input id="muralInput" placeholder="O que estás a pensar?">
+            <button class="btn-circle" onclick="enviarMural()">✨</button>
         </div>
     </div>
 
     <div id="tab-listas" class="tab-content">
-        <div class="card">
-            <input id="novaListaInput" placeholder="Nome da nova lista (ex: Filmes)" style="width:65%">
-            <button onclick="criarLista()" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:10px">Criar Lista</button>
+        <div class="card" style="margin-bottom:20px;">
+            <h4 style="margin:0 0 10px 0; color:var(--p)">Criar Nova Lista</h4>
+            <div class="input-area">
+                <input id="novaListaInput" placeholder="Ex: Filmes, Viagens...">
+                <button class="btn-circle" onclick="criarLista()">+</button>
+            </div>
         </div>
         <div id="area-listas"></div>
     </div>
 
     <nav class="tab-bar">
-        <button class="tab-item active" onclick="mudarTab('chat', this)">💬 Chat</button>
-        <button class="tab-item" onclick="mudarTab('pensamentos', this)">💭 Mural</button>
-        <button class="tab-item" onclick="mudarTab('listas', this)">📋 Listas</button>
+        <button class="tab-item active" onclick="mudarTab('chat', this)">💬<br>Chat</button>
+        <button class="tab-item" onclick="mudarTab('mural', this)">💭<br>Mural</button>
+        <button class="tab-item" onclick="mudarTab('listas', this)">📋<br>Listas</button>
     </nav>
 
+    <audio id="ping" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+
 <script>
-    // SUAS CONFIGURAÇÕES
     const firebaseConfig = {
         apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
         authDomain: "manuu-c23a7.firebaseapp.com",
@@ -136,31 +123,34 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    let userObj = null;
-    let meuNick = localStorage.getItem('apelido');
-    let replyMsg = null;
+    let user = null;
+    let myNick = localStorage.getItem('v2_nick');
+    let rMsg = null;
 
-    // LOGIN
-    btnGoogle.onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    // LOGIN GOOGLE CORRIGIDO
+    document.getElementById('btn-google').onclick = () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(e => alert("Erro ao logar: " + e.message));
+    };
 
     auth.onAuthStateChanged(u => {
         if(u) {
-            userObj = u;
-            if(!meuNick) {
-                btnGoogle.style.display = "none";
-                document.getElementById('area-nick').style.display = "block";
+            user = u;
+            if(!myNick) {
+                document.getElementById('btn-google').style.display = "none";
+                document.getElementById('nickname-box').style.display = "block";
             } else {
-                iniciarApp();
+                iniciar();
             }
         }
     });
 
     function salvarNick() {
-        const n = inputNick.value.trim();
-        if(n) { meuNick = n; localStorage.setItem('apelido', n); iniciarApp(); }
+        const n = document.getElementById('nickInput').value.trim();
+        if(n) { myNick = n; localStorage.setItem('v2_nick', n); iniciar(); }
     }
 
-    function iniciarApp() {
+    function iniciar() {
         document.getElementById('login-screen').style.display = "none";
         
         // Contador
@@ -170,109 +160,99 @@
             document.getElementById('contador').innerText = `❤️ ${dias} dias juntos`;
         }, 1000);
 
-        carregarDados();
+        carregarTudo();
     }
 
-    // NAVEGAÇÃO
-    function mudarTab(tab, btn) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
-        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active-tab');
-        btn.classList.add('active');
+    function mudarTab(t, b) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-tab'));
+        document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('tab-' + t).classList.add('active-tab');
+        b.classList.add('active');
     }
 
-    // LÓGICA DO CHAT (REALTIME DATABASE - SEMPRE FICA SALVO)
-    function carregarDados() {
-        db.ref('chat').on('value', snap => {
+    function carregarTudo() {
+        // Chat
+        db.ref('chat_v2').on('value', s => {
             chatBox.innerHTML = "";
-            snap.forEach(d => {
-                const m = d.val();
-                const souEu = m.uid === userObj.uid;
+            s.forEach(child => {
+                const m = child.val();
+                const souEu = m.uid === user.uid;
                 chatBox.innerHTML += `
-                    <div class="msg ${souEu ? 'sent' : 'received'}" onclick="prepararRep('${m.texto}')">
-                        ${m.reply ? `<div style="font-size:0.7rem; opacity:0.6; border-left:2px solid white; padding-left:5px;">${m.reply}</div>` : ''}
-                        <small style="font-size:0.6rem; display:block;">${m.nome}</small>
-                        ${m.texto}
-                        ${souEu ? `<span onclick="event.stopPropagation(); deletar('chat/${d.key}')" style="font-size:0.7rem; margin-left:10px; cursor:pointer">🗑️</span>` : ''}
+                    <div class="msg ${souEu?'sent':'received'}" onclick="prepararRep('${m.txt}')">
+                        <span class="msg-name">${m.nick}</span>
+                        ${m.rep?`<div style="font-size:0.7rem; opacity:0.6; border-left:2px solid white; padding-left:5px; margin-bottom:5px;">${m.rep}</div>`:''}
+                        ${m.txt}
+                        ${souEu?`<span onclick="event.stopPropagation(); apagar('chat_v2/${child.key}')" style="margin-left:8px; cursor:pointer; opacity:0.5">🗑️</span>`:''}
                     </div>`;
             });
             chatBox.scrollTop = chatBox.scrollHeight;
+            if(s.exists()) document.getElementById('ping').play().catch(()=>{});
         });
 
         // Mural
-        db.ref('mural').on('value', snap => {
-            pensamentosBox.innerHTML = "";
-            snap.forEach(d => {
-                const p = d.val();
-                pensamentosBox.innerHTML += `<div class="card"><b>${p.nome}:</b><br>${p.texto} <span onclick="deletar('mural/${d.key}')" style="float:right">✅</span></div>`;
+        db.ref('mural_v2').on('value', s => {
+            muralBox.innerHTML = "";
+            s.forEach(child => {
+                const p = child.val();
+                muralBox.innerHTML += `<div class="card"><span class="msg-name" style="color:var(--p)">${p.nick} postou:</span>${p.txt} <span onclick="apagar('mural_v2/${child.key}')" style="float:right; cursor:pointer">✅</span></div>`;
             });
         });
 
         // Listas Dinâmicas
-        db.ref('pastas').on('value', snap => {
-            area-listas.innerHTML = "";
-            snap.forEach(pasta => {
-                const nomePasta = pasta.key;
-                let itensHtml = "";
-                if(pasta.child('itens').exists()){
-                    pasta.child('itens').forEach(it => {
-                        itensHtml += `<div class="item-row"><span>${it.val().t}</span><span onclick="deletar('pastas/${nomePasta}/itens/${it.key}')">✅</span></div>`;
-                    });
-                }
-                area-listas.innerHTML += `
+        db.ref('listas_v2').on('value', s => {
+            document.getElementById('area-listas').innerHTML = "";
+            s.forEach(pasta => {
+                const nome = pasta.key;
+                let itens = "";
+                pasta.child('itens').forEach(it => {
+                    itens += `<div class="item-row"><span>${it.val().txt}</span><span onclick="apagar('listas_v2/${nome}/itens/${it.key}')" class="btn-check">✅</span></div>`;
+                });
+                document.getElementById('area-listas').innerHTML += `
                     <div class="card">
-                        <div class="list-header"><b>${nomePasta}</b> <button onclick="deletar('pastas/${nomePasta}')" style="font-size:0.6rem; background:none; color:red; border:none;">Excluir</button></div>
-                        ${itensHtml}
-                        <div class="input-area"><input id="in-${nomePasta}" placeholder="Item..."><button onclick="addItem('${nomePasta}')">+</button></div>
+                        <div class="list-header"><b>${nome}</b> <small onclick="apagar('listas_v2/${nome}')" style="color:red; cursor:pointer">Eliminar</small></div>
+                        ${itens}
+                        <div class="input-area" style="margin-top:10px; box-shadow:none; background:#fdfdfd; border:1px solid #eee;">
+                            <input id="in-${nome}" placeholder="Novo item...">
+                            <button class="btn-circle" onclick="addItem('${nome}')" style="width:30px; height:30px; font-size:0.9rem;">+</button>
+                        </div>
                     </div>`;
             });
         });
 
         // Digitando
-        db.ref('status/digitando').on('value', snap => {
-            const d = snap.val();
-            document.getElementById('txt-digitando').innerText = (d && d.user !== meuNick && d.status) ? ` - ${d.user} está digitando...` : "";
+        db.ref('status_v2/dig').on('value', s => {
+            const d = s.val();
+            document.getElementById('digitando-aviso').innerText = (d && d.u !== myNick && d.ativo) ? ` - ${d.u} está a escrever...` : "";
         });
     }
 
-    // AÇÕES
     function enviarChat() {
         const t = chatInput.value;
         if(!t) return;
-        db.ref('chat').push({ uid: userObj.uid, nome: meuNick, texto: t, reply: replyMsg });
-        chatInput.value = "";
-        cancelarResposta();
-        db.ref('status/digitando').set({ status: false });
+        db.ref('chat_v2').push({ uid: user.uid, nick: myNick, txt: t, rep: rMsg });
+        chatInput.value = ""; cancelarRep();
+        db.ref('status_v2/dig').set({ ativo: false });
     }
 
-    function enviarPensamento() {
-        const t = pensamentoInput.value;
-        if(t) { db.ref('mural').push({ nome: meuNick, texto: t }); pensamentoInput.value = ""; }
+    function enviarMural() {
+        const t = muralInput.value;
+        if(t) { db.ref('mural_v2').push({ nick: myNick, txt: t }); muralInput.value = ""; }
     }
 
     function criarLista() {
         const n = novaListaInput.value;
-        if(n) { db.ref('pastas/' + n).set({ criadoPor: meuNick }); novaListaInput.value = ""; }
+        if(n) { db.ref('listas_v2/' + n).set({ dono: myNick }); novaListaInput.value = ""; }
     }
 
-    function addItem(pasta) {
-        const v = document.getElementById('in-' + pasta).value;
-        if(v) { db.ref('pastas/' + pasta + '/itens').push({ t: v }); document.getElementById('in-' + pasta).value = ""; }
+    function addItem(p) {
+        const v = document.getElementById('in-'+p).value;
+        if(v) { db.ref('listas_v2/'+p+'/itens').push({ txt: v }); document.getElementById('in-'+p).value = ""; }
     }
 
-    function avisarDigitando() {
-        db.ref('status/digitando').set({ user: meuNick, status: chatInput.value.length > 0 });
-    }
-
-    function prepararRep(txt) {
-        replyMsg = txt;
-        document.getElementById('reply-text').innerText = "Respondendo: " + txt;
-        document.getElementById('reply-preview').style.display = "block";
-    }
-
-    function cancelarResposta() { replyMsg = null; document.getElementById('reply-preview').style.display = "none"; }
-
-    function deletar(caminho) { if(confirm("Deseja concluir/apagar?")) db.ref(caminho).remove(); }
+    function digitando() { db.ref('status_v2/dig').set({ u: myNick, ativo: chatInput.value.length > 0 }); }
+    function prepararRep(t) { rMsg = t; document.getElementById('reply-text').innerText = "A responder: " + t; document.getElementById('reply-box').style.display = "block"; chatInput.focus(); }
+    function cancelarRep() { rMsg = null; document.getElementById('reply-box').style.display = "none"; }
+    function apagar(c) { if(confirm("Desejas apagar/concluir?")) db.ref(c).remove(); }
 </script>
 </body>
 </html>
