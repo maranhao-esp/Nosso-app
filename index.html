@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-messaging-compat.js"></script>
 
     <style>
         :root { --p: #ff4f87; --bg: #fff5f8; }
@@ -70,6 +71,9 @@
         <header>
             <div id="contador"></div>
             <div id="status-online">● Online</div>
+            <button onclick="ativarNotificacoes()" style="margin: 10px auto; display: block; padding: 12px 24px; background: var(--p); color: white; border: none; border-radius: 30px; font-weight: bold; font-size: 1rem; cursor: pointer;">
+              Ativar Notificações ❤️
+            </button>
         </header>
 
         <div id="tab-chat" class="tab-content active-tab">
@@ -205,7 +209,47 @@
     window.visualViewport.addEventListener('resize', () => {
         document.getElementById('app-wrapper').style.height = window.visualViewport.height + "px";
     });
+
+    // FCM - Notificações Push
+    const messaging = firebase.messaging();
+
+    async function ativarNotificacoes() {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          alert('Permissão negada. Não receberá notificações push.');
+          return;
+        }
+
+        const vapidKey = 'BPn6ATIl_Rjnxsn8yiRCQBZ2XtisDs5qIW6hiq391z6YTYEtKyY9OQfVAgs2y6v3siAamzjyRDjTMrDSzbm9uY0';
+
+        const token = await messaging.getToken({ vapidKey });
+        console.log('Token FCM:', token);
+
+        // Salva o token no Realtime Database (associado ao usuário atual)
+        db.ref('tokens/' + user.uid).set(token);
+
+        alert('Notificações ativadas! Você receberá push mesmo com o app fechado.');
+      } catch (err) {
+        console.error('Erro ao ativar push:', err);
+        alert('Erro: ' + err.message);
+      }
+    }
+
+    // Mensagens em foreground (app aberto)
+    messaging.onMessage((payload) => {
+      console.log('Mensagem recebida (foreground):', payload);
+      alert(payload.notification?.title + '\n' + payload.notification?.body);
+    });
+
+    // Registra o service worker para push (deve estar na raiz)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then(reg => console.log('Service Worker FCM registrado:', reg))
+          .catch(err => console.error('Erro no SW:', err));
+      });
+    }
 </script>
 </body>
-    </html>
-    
+                                                                                          </html>
