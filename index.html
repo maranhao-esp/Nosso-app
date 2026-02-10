@@ -13,7 +13,8 @@
     <style>
         :root { --p: #ff4f87; --bg: #fff5f8; }
         
-        /* Evita que o corpo da página role, deixando o scroll apenas para o chat */
+        * { box-sizing: border-box; }
+
         html, body { 
             height: 100%; 
             margin: 0; 
@@ -23,78 +24,108 @@
             font-family: 'Segoe UI', sans-serif; 
         }
 
+        /* Contentor Principal ocupa a tela toda */
         #app-wrapper { 
-            display: flex; 
-            flex-direction: column; 
-            height: 100dvh; /* Usa a altura dinâmica para mobile */
+            position: relative;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
         
-        /* HEADER FIXO: Ele nunca some, nem com teclado aberto */
+        /* HEADER: Altura fixa para não encolher */
         header { 
+            height: 70px;
             background: white; 
             padding: 10px; 
             text-align: center; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-            z-index: 100;
-            flex-shrink: 0; /* Impede o header de ser espremido */
+            flex-shrink: 0;
+            z-index: 10;
         }
         
         #contador { font-weight:bold; color: var(--p); font-size: 1.1rem; }
-        #status-online { font-size: 0.75rem; color: #2ecc71; font-weight: bold; margin-top: 2px; }
+        #status-online { font-size: 0.75rem; color: #2ecc71; font-weight: bold; }
 
-        /* Área de Conteúdo */
-        .tab-content { 
-            display: none; 
-            flex: 1; 
-            flex-direction: column; 
-            overflow: hidden; 
+        /* ÁREA DO CHAT: Ocupa o resto do espaço e permite scroll */
+        #chat-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        .active-tab { display: flex; }
 
-        /* CHATBOX: Onde o scroll acontece */
         #chatBox { 
-            flex: 1; 
+            flex: 1;
             overflow-y: auto; 
             display: flex; 
             flex-direction: column; 
             gap: 8px; 
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
+            padding: 15px;
+            background: var(--bg);
         }
 
         /* Mensagens */
-        .msg { max-width: 80%; padding: 12px; border-radius: 18px; font-size: 0.95rem; cursor: pointer; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; }
         .msg.sent { align-self: flex-end; background: var(--p); color: white; border-bottom-right-radius: 2px; }
         .msg.received { align-self: flex-start; background: white; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
-        .reply-preview { font-size: 0.7rem; opacity: 0.8; border-left: 2px solid white; padding-left: 5px; margin-bottom: 4px; display: block; }
 
-        /* Barra de Resposta */
+        /* INPUT E REPLY: Ficam sempre no fundo do contentor de chat */
+        .bottom-area {
+            background: white;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
         #reply-bar { 
             display: none; 
-            background: #eee; 
+            background: #f0f0f0; 
             padding: 8px 15px; 
             font-size: 0.8rem; 
             justify-content: space-between; 
             align-items: center; 
         }
 
-        /* Container de Input: Fica fixo acima do teclado */
-        .input-container { 
-            padding: 10px; 
-            background: white; 
-            border-top: 1px solid #eee;
+        .input-area { 
+            display: flex; 
+            gap: 8px; 
+            padding: 10px 15px; 
+            align-items: center; 
+        }
+        
+        input { 
+            flex: 1; 
+            border: 1px solid #eee; 
+            padding: 12px 18px; 
+            outline: none; 
+            background: #f9f9f9; 
+            font-size: 1rem; 
+            border-radius: 25px;
+        }
+        
+        .btn-circle { 
+            background: var(--p); 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            width: 45px; 
+            height: 45px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
             flex-shrink: 0;
         }
-        .input-area { display: flex; gap: 8px; background: #f0f0f0; padding: 5px 12px; border-radius: 30px; align-items: center; }
-        input { flex: 1; border: none; padding: 10px; outline: none; background: transparent; font-size: 1rem; }
-        
-        .btn-circle { background: var(--p); color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
 
-        /* Navegação */
-        .tab-bar { background: white; display: flex; justify-content: space-around; border-top: 1px solid #eee; height: 60px; flex-shrink: 0; }
-        .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.7rem; flex: 1; }
-        .tab-item.active { color: var(--p); }
+        /* MENU INFERIOR: Ocultamos se o teclado estiver aberto para ganhar espaço */
+        .tab-bar { 
+            height: 60px;
+            background: white; 
+            display: flex; 
+            justify-content: space-around; 
+            border-top: 1px solid #eee; 
+            flex-shrink: 0;
+        }
 
         #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
     </style>
@@ -106,7 +137,7 @@
             <h2 style="color: var(--p)">Nosso Mundo ❤️</h2>
             <button id="btn-google" style="width:100%; padding:15px; border-radius:15px; background:white; border:1px solid #ddd; font-weight:bold;">Entrar com Google</button>
             <div id="nickname-box" style="display:none; margin-top:20px;">
-                <input id="nickInput" placeholder="Teu apelido..." style="width: 80%; padding:12px; border-radius:10px; border:1px solid #eee;">
+                <input id="nickInput" placeholder="Teu apelido...">
                 <button onclick="salvarNick()" style="background: var(--p); color:white; border:none; padding:12px; border-radius:10px; width:100%; margin-top:10px;">Entrar</button>
             </div>
         </div>
@@ -118,31 +149,30 @@
             <div id="status-online">● Carregando...</div>
         </header>
 
-        <div id="tab-chat" class="tab-content active-tab">
+        <div id="chat-container">
             <div id="chatBox"></div>
             
-            <div id="reply-bar">
-                <span id="reply-text"></span>
-                <button onclick="cancelarResposta()" style="border:none; background:none; color:red;">✕</button>
-            </div>
-
-            <div class="input-container">
+            <div class="bottom-area">
+                <div id="reply-bar">
+                    <span id="reply-text"></span>
+                    <button onclick="cancelarResposta()" style="border:none; background:none; color:red;">✕</button>
+                </div>
                 <div class="input-area">
-                    <input id="chatInput" placeholder="Mensagem..." oninput="tratarInput()">
+                    <input id="chatInput" placeholder="Escreve aqui..." oninput="tratarInput()">
                     <button class="btn-circle" onclick="enviarChat()">➔</button>
                 </div>
             </div>
         </div>
 
-        <nav class="tab-bar">
-            <button class="tab-item active" onclick="mudarTab('chat', this)">💬<br>Chat</button>
-            <button class="tab-item" onclick="mudarTab('mural', this)">💭<br>Mural</button>
-            <button class="tab-item" onclick="mudarTab('listas', this)">📋<br>Listas</button>
+        <nav class="tab-bar" id="menu-inferior">
+            <button style="border:none;background:none;color:var(--p);font-weight:bold;">💬<br>Chat</button>
+            <button style="border:none;background:none;color:#bbb;">💭<br>Mural</button>
+            <button style="border:none;background:none;color:#bbb;">📋<br>Listas</button>
         </nav>
     </div>
 
 <script>
-    // Configurações e Scripts permanecem os mesmos, mas com a função de scroll ajustada
+    // Configurações do Firebase (As mesmas de antes)
     const firebaseConfig = {
         apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
         authDomain: "manuu-c23a7.firebaseapp.com",
@@ -187,20 +217,24 @@
             let outros = [];
             s.forEach(c => { if(c.key !== user.uid) outros.push(c.val().nick); });
             const aviso = document.getElementById('status-online');
-            aviso.innerText = outros.length > 0 ? `● ${outros.join(', ')} está Online` : "● Offline";
-            aviso.style.color = outros.length > 0 ? "#2ecc71" : "#bbb";
+            if(aviso) {
+                aviso.innerText = outros.length > 0 ? `● ${outros.join(', ')} está Online` : "● Offline";
+                aviso.style.color = outros.length > 0 ? "#2ecc71" : "#bbb";
+            }
         });
 
         db.ref('digitando_v3').on('value', s => {
             const d = s.val();
-            if(d && d.u !== myNick && d.ativo) {
-                document.getElementById('status-online').innerText = `✍️ ${d.u} está digitando...`;
+            const aviso = document.getElementById('status-online');
+            if(d && d.u !== myNick && d.ativo && aviso) {
+                aviso.innerText = `✍️ ${d.u} está digitando...`;
             }
         });
 
         carregarChat();
         setInterval(() => {
-            const dias = Math.floor((new Date() - new Date("2025-02-26")) / 86400000);
+            const diff = new Date() - new Date("2025-02-26");
+            const dias = Math.floor(diff / 86400000);
             document.getElementById('contador').innerText = `❤️ ${dias} dias juntos`;
         }, 1000);
     }
@@ -210,26 +244,25 @@
     }
 
     function carregarChat() {
-        db.ref('chat_v3').limitToLast(50).on('value', s => {
+        db.ref('chat_v3').limitToLast(40).on('value', s => {
             chatBox.innerHTML = "";
             s.forEach(child => {
                 const m = child.val();
                 const souEu = m.uid === user.uid;
-                let replyHtml = m.reply ? `<small class="reply-preview">↳ ${m.reply}</small>` : "";
+                let r = m.reply ? `<small style="display:block;opacity:0.6;font-size:0.7rem;">↳ ${m.reply}</small>` : "";
                 const div = document.createElement('div');
                 div.className = `msg ${souEu?'sent':'received'}`;
-                div.innerHTML = `${replyHtml}<b>${m.nick}</b><br>${m.txt}`;
+                div.innerHTML = `${r}<b>${m.nick}</b><br>${m.txt}`;
                 div.onclick = () => prepararResposta(m.txt, m.nick);
                 chatBox.appendChild(div);
             });
-            // Rola para o fim suavemente
-            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
     }
 
-    function prepararResposta(texto, autor) {
-        replyData = `${autor}: ${texto}`;
-        document.getElementById('reply-text').innerText = `Respondendo: ${texto.substring(0,15)}...`;
+    function prepararResposta(t, a) {
+        replyData = `${a}: ${t}`;
+        document.getElementById('reply-text').innerText = `A responder a: ${t.substring(0,15)}...`;
         document.getElementById('reply-bar').style.display = "flex";
         chatInput.focus();
     }
@@ -242,29 +275,24 @@
     function enviarChat() {
         const t = chatInput.value.trim();
         if(!t) return;
-        db.ref('chat_v3').push({
-            uid: user.uid,
-            nick: myNick,
-            txt: t,
-            reply: replyData,
-            time: Date.now()
-        });
+        db.ref('chat_v3').push({ uid: user.uid, nick: myNick, txt: t, reply: replyData });
         chatInput.value = "";
         cancelarResposta();
         db.ref('digitando_v3').set({ u: myNick, ativo: false });
     }
 
-    function mudarTab(t, b) {
-        document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
-        b.classList.add('active');
-        if(t === 'chat') chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // Garante que o chat role para o fim quando o teclado abrir
-    window.addEventListener('resize', () => {
-        if(document.activeElement.tagName === 'INPUT') {
-            setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
+    // AJUSTE PARA O TECLADO
+    window.visualViewport.addEventListener('resize', () => {
+        let vh = window.visualViewport.height;
+        document.getElementById('app-wrapper').style.height = vh + "px";
+        
+        // Se o teclado estiver aberto (altura pequena), esconde o menu para dar espaço
+        if (vh < window.innerHeight * 0.8) {
+            document.getElementById('menu-inferior').style.display = "none";
+        } else {
+            document.getElementById('menu-inferior').style.display = "flex";
         }
+        setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
     });
 </script>
 </body>
