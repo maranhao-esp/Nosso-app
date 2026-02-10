@@ -12,133 +12,50 @@
 
     <style>
         :root { --p: #ff4f87; --bg: #fff5f8; }
-        
         * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); font-family: 'Segoe UI', sans-serif; }
 
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background: var(--bg); 
-            font-family: 'Segoe UI', sans-serif; 
-        }
-
-        /* Contentor Principal ocupa a tela toda */
-        #app-wrapper { 
-            position: relative;
-            height: 100%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-        }
+        #app-wrapper { position: relative; height: 100%; width: 100%; display: flex; flex-direction: column; }
         
-        /* HEADER: Altura fixa para não encolher */
-        header { 
-            height: 70px;
-            background: white; 
-            padding: 10px; 
-            text-align: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-            flex-shrink: 0;
-            z-index: 10;
-        }
-        
+        header { background: white; padding: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-shrink: 0; z-index: 10; }
         #contador { font-weight:bold; color: var(--p); font-size: 1.1rem; }
-        #status-online { font-size: 0.75rem; color: #2ecc71; font-weight: bold; }
+        #status-online { font-size: 0.75rem; color: #2ecc71; font-weight: bold; margin-top: 2px; }
 
-        /* ÁREA DO CHAT: Ocupa o resto do espaço e permite scroll */
-        #chat-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 10px; }
+        .active-tab { display: flex; }
+        
+        #chatBox, #muralBox, #listaBox { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 5px; }
 
-        #chatBox { 
-            flex: 1;
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px; 
-            padding: 15px;
-            background: var(--bg);
-        }
-
-        /* Mensagens */
-        .msg { max-width: 80%; padding: 12px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 20px; font-size: 0.9rem; position: relative; cursor: pointer; }
         .msg.sent { align-self: flex-end; background: var(--p); color: white; border-bottom-right-radius: 2px; }
-        .msg.received { align-self: flex-start; background: white; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
-        /* INPUT E REPLY: Ficam sempre no fundo do contentor de chat */
-        .bottom-area {
-            background: white;
-            border-top: 1px solid #eee;
-            flex-shrink: 0;
-        }
-
-        #reply-bar { 
-            display: none; 
-            background: #f0f0f0; 
-            padding: 8px 15px; 
-            font-size: 0.8rem; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-
-        .input-area { 
-            display: flex; 
-            gap: 8px; 
-            padding: 10px 15px; 
-            align-items: center; 
-        }
+        .msg.received { align-self: flex-start; background: white; border: 1px solid #f0f0f0; border-bottom-left-radius: 2px; }
         
-        input { 
-            flex: 1; 
-            border: 1px solid #eee; 
-            padding: 12px 18px; 
-            outline: none; 
-            background: #f9f9f9; 
-            font-size: 1rem; 
-            border-radius: 25px;
-        }
-        
-        .btn-circle { 
-            background: var(--p); 
-            color: white; 
-            border: none; 
-            border-radius: 50%; 
-            width: 45px; 
-            height: 45px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            flex-shrink: 0;
-        }
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-        /* MENU INFERIOR: Ocultamos se o teclado estiver aberto para ganhar espaço */
-        .tab-bar { 
-            height: 60px;
-            background: white; 
-            display: flex; 
-            justify-content: space-around; 
-            border-top: 1px solid #eee; 
-            flex-shrink: 0;
-        }
+        .input-container { padding: 10px; background: white; border-top: 1px solid #eee; flex-shrink: 0; }
+        .input-area { display: flex; gap: 8px; background: #f9f9f9; padding: 5px 10px; border-radius: 30px; align-items: center; }
+        input { flex: 1; border: none; padding: 10px; outline: none; background: transparent; font-size: 1rem; }
+        .btn-circle { background: var(--p); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
 
+        .tab-bar { background: white; display: flex; justify-content: space-around; padding: 5px 0; border-top: 1px solid #eee; height: 65px; flex-shrink: 0; }
+        .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.75rem; flex: 1; }
+        .tab-item.active { color: var(--p); }
+
+        #reply-bar { display: none; background: #eee; padding: 8px 15px; font-size: 0.8rem; border-radius: 15px 15px 0 0; justify-content: space-between; align-items: center; }
         #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <div style="background: white; padding: 30px; border-radius: 30px; text-align: center; width: 85%;">
+        <div style="background: white; padding: 30px; border-radius: 30px; text-align: center; width: 85%; max-width: 350px;">
             <h2 style="color: var(--p)">Nosso Mundo ❤️</h2>
-            <button id="btn-google" style="width:100%; padding:15px; border-radius:15px; background:white; border:1px solid #ddd; font-weight:bold;">Entrar com Google</button>
+            <button id="btn-google" style="width:100%; padding:15px; border-radius:15px; background:white; border:1px solid #ddd; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:10px;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Entrar com Google
+            </button>
             <div id="nickname-box" style="display:none; margin-top:20px;">
-                <input id="nickInput" placeholder="Teu apelido...">
-                <button onclick="salvarNick()" style="background: var(--p); color:white; border:none; padding:12px; border-radius:10px; width:100%; margin-top:10px;">Entrar</button>
+                <input id="nickInput" placeholder="Teu apelido..." style="border: 1px solid #eee; width: 85%; margin-bottom:10px; border-radius:10px; padding: 12px;">
+                <button onclick="salvarNick()" style="background: var(--p); color:white; border:none; padding:12px; border-radius:10px; width:100%; font-weight:bold;">Entrar</button>
             </div>
         </div>
     </div>
@@ -146,33 +63,51 @@
     <div id="app-wrapper">
         <header>
             <div id="contador"></div>
-            <div id="status-online">● Carregando...</div>
+            <div id="status-online">● Online</div>
         </header>
 
-        <div id="chat-container">
+        <div id="tab-chat" class="tab-content active-tab">
             <div id="chatBox"></div>
-            
-            <div class="bottom-area">
-                <div id="reply-bar">
-                    <span id="reply-text"></span>
-                    <button onclick="cancelarResposta()" style="border:none; background:none; color:red;">✕</button>
-                </div>
+            <div id="reply-bar">
+                <span id="reply-text"></span>
+                <button onclick="cancelarResposta()" style="border:none; background:none; color:red; font-weight:bold;">✕</button>
+            </div>
+            <div class="input-container">
                 <div class="input-area">
-                    <input id="chatInput" placeholder="Escreve aqui..." oninput="tratarInput()">
-                    <button class="btn-circle" onclick="enviarChat()">➔</button>
+                    <input id="chatInput" placeholder="Mensagem..." oninput="tratarInput()">
+                    <button class="btn-circle" onclick="enviarChat()">✈</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-mural" class="tab-content">
+            <div id="muralBox"></div>
+            <div class="input-container">
+                <div class="input-area">
+                    <input id="muralInput" placeholder="Pensamento...">
+                    <button class="btn-circle" onclick="enviarMural()">✨</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-listas" class="tab-content">
+            <div id="listaBox"></div>
+            <div class="input-container">
+                <div class="input-area">
+                    <input id="listaInput" placeholder="Item...">
+                    <button class="btn-circle" onclick="enviarLista()">📌</button>
                 </div>
             </div>
         </div>
 
         <nav class="tab-bar" id="menu-inferior">
-            <button style="border:none;background:none;color:var(--p);font-weight:bold;">💬<br>Chat</button>
-            <button style="border:none;background:none;color:#bbb;">💭<br>Mural</button>
-            <button style="border:none;background:none;color:#bbb;">📋<br>Listas</button>
+            <button class="tab-item active" onclick="mudarTab('chat', this)">💬<br>Chat</button>
+            <button class="tab-item" onclick="mudarTab('mural', this)">💭<br>Mural</button>
+            <button class="tab-item" onclick="mudarTab('listas', this)">📋<br>Listas</button>
         </nav>
     </div>
 
 <script>
-    // Configurações do Firebase (As mesmas de antes)
     const firebaseConfig = {
         apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
         authDomain: "manuu-c23a7.firebaseapp.com",
@@ -217,30 +152,42 @@
             let outros = [];
             s.forEach(c => { if(c.key !== user.uid) outros.push(c.val().nick); });
             const aviso = document.getElementById('status-online');
-            if(aviso) {
-                aviso.innerText = outros.length > 0 ? `● ${outros.join(', ')} está Online` : "● Offline";
-                aviso.style.color = outros.length > 0 ? "#2ecc71" : "#bbb";
-            }
+            aviso.innerText = outros.length > 0 ? `● ${outros.join(', ')} está Online` : "● Offline";
+            aviso.style.color = outros.length > 0 ? "#2ecc71" : "#bbb";
         });
 
         db.ref('digitando_v3').on('value', s => {
             const d = s.val();
-            const aviso = document.getElementById('status-online');
-            if(d && d.u !== myNick && d.ativo && aviso) {
-                aviso.innerText = `✍️ ${d.u} está digitando...`;
+            if(d && d.u !== myNick && d.ativo) {
+                document.getElementById('status-online').innerText = `✍️ ${d.u} está digitando...`;
             }
         });
 
         carregarChat();
+        carregarMural();
+        carregarListas();
+        
         setInterval(() => {
-            const diff = new Date() - new Date("2025-02-26");
-            const dias = Math.floor(diff / 86400000);
+            const dias = Math.floor((new Date() - new Date("2025-02-26")) / 86400000);
             document.getElementById('contador').innerText = `❤️ ${dias} dias juntos`;
         }, 1000);
     }
 
-    function tratarInput() {
-        db.ref('digitando_v3').set({ u: myNick, ativo: chatInput.value.length > 0 });
+    function mudarTab(tabName, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
+        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active-tab');
+        btn.classList.add('active');
+        if(tabName === 'chat') chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function enviarChat() {
+        const t = chatInput.value.trim();
+        if(!t) return;
+        db.ref('chat_v3').push({ uid: user.uid, nick: myNick, txt: t, reply: replyData });
+        chatInput.value = "";
+        cancelarResposta();
+        db.ref('digitando_v3').set({ u: myNick, ativo: false });
     }
 
     function carregarChat() {
@@ -262,36 +209,50 @@
 
     function prepararResposta(t, a) {
         replyData = `${a}: ${t}`;
-        document.getElementById('reply-text').innerText = `A responder a: ${t.substring(0,15)}...`;
+        document.getElementById('reply-text').innerText = `Respondendo: ${t.substring(0,15)}...`;
         document.getElementById('reply-bar').style.display = "flex";
         chatInput.focus();
     }
+    function cancelarResposta() { replyData = null; document.getElementById('reply-bar').style.display = "none"; }
+    function tratarInput() { db.ref('digitando_v3').set({ u: myNick, ativo: chatInput.value.length > 0 }); }
 
-    function cancelarResposta() {
-        replyData = null;
-        document.getElementById('reply-bar').style.display = "none";
+    function enviarMural() {
+        const t = muralInput.value.trim();
+        if(t) { db.ref('mural_v3').push({ nick: myNick, txt: t }); muralInput.value = ""; }
     }
 
-    function enviarChat() {
-        const t = chatInput.value.trim();
-        if(!t) return;
-        db.ref('chat_v3').push({ uid: user.uid, nick: myNick, txt: t, reply: replyData });
-        chatInput.value = "";
-        cancelarResposta();
-        db.ref('digitando_v3').set({ u: myNick, ativo: false });
+    function carregarMural() {
+        db.ref('mural_v3').on('value', s => {
+            muralBox.innerHTML = "";
+            s.forEach(c => {
+                const m = c.val();
+                muralBox.innerHTML += `<div class="card"><b>${m.nick} pensou:</b><br>${m.txt}</div>`;
+            });
+            muralBox.scrollTop = muralBox.scrollHeight;
+        });
     }
 
-    // AJUSTE PARA O TECLADO
+    function enviarLista() {
+        const t = listaInput.value.trim();
+        if(t) { db.ref('listas_v3').push({ txt: t }); listaInput.value = ""; }
+    }
+
+    function carregarListas() {
+        db.ref('listas_v3').on('value', s => {
+            listaBox.innerHTML = "";
+            s.forEach(c => {
+                const l = c.val();
+                listaBox.innerHTML += `<div class="card" onclick="removerLista('${c.key}')">📌 ${l.txt}</div>`;
+            });
+        });
+    }
+
+    function removerLista(id) { if(confirm("Remover?")) db.ref('listas_v3').child(id).remove(); }
+
     window.visualViewport.addEventListener('resize', () => {
         let vh = window.visualViewport.height;
         document.getElementById('app-wrapper').style.height = vh + "px";
-        
-        // Se o teclado estiver aberto (altura pequena), esconde o menu para dar espaço
-        if (vh < window.innerHeight * 0.8) {
-            document.getElementById('menu-inferior').style.display = "none";
-        } else {
-            document.getElementById('menu-inferior').style.display = "flex";
-        }
+        document.getElementById('menu-inferior').style.display = vh < window.innerHeight * 0.8 ? "none" : "flex";
         setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
     });
 </script>
