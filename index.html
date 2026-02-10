@@ -2,235 +2,183 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Nosso Mundo ❤️</title>
+    <link rel="manifest" href="manifest.json">
     
-    <!-- Firebase BÁSICO (só chat) -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    
+
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 20px; background: #fff5f8; font-family: sans-serif; }
+        :root { --p: #ff4f87; --bg: #fff5f8; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); font-family: 'Segoe UI', sans-serif; }
         
-        .tela-login {
-            max-width: 400px;
-            margin: 50px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(255,79,135,0.2);
-        }
+        #app-wrapper { display: flex; flex-direction: column; height: 100dvh; }
         
-        h1 { color: #ff4f87; margin-bottom: 30px; }
+        /* Ecrã de Login */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 30px; border-radius: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 85%; max-width: 350px; }
         
-        .botao {
-            width: 100%;
-            padding: 16px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            display: block;
-        }
+        header { background: white; padding: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
+        #status-online { font-size: 0.7rem; color: #2ecc71; font-weight: bold; }
+
+        /* Abas e Chat */
+        .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; padding: 10px; }
+        .active-tab { display: flex; }
+        #chatBox { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 5px; }
+
+        .msg { max-width: 80%; padding: 12px; border-radius: 20px; font-size: 0.9rem; position: relative; }
+        .msg.sent { align-self: flex-end; background: var(--p); color: white; border-bottom-right-radius: 2px; }
+        .msg.received { align-self: flex-start; background: white; border: 1px solid #f0f0f0; border-bottom-left-radius: 2px; }
         
-        #btnGoogle {
-            background: white;
-            border: 2px solid #ddd;
-            color: #444;
-        }
+        /* Inputs e Botões */
+        .input-container { padding: 10px; background: white; border-top: 1px solid #eee; flex-shrink: 0; }
+        .input-area { display: flex; gap: 8px; background: #f9f9f9; padding: 5px 10px; border-radius: 30px; align-items: center; }
+        input { flex: 1; border: none; padding: 10px; outline: none; background: transparent; font-size: 1rem; }
+        .btn-circle { background: var(--p); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; }
+
+        /* Menu Inferior */
+        .tab-bar { background: white; display: flex; justify-content: space-around; padding: 5px 0; border-top: 1px solid #eee; height: 65px; }
+        .tab-item { border: none; background: none; color: #bbb; font-weight: bold; font-size: 0.75rem; flex: 1; }
+        .tab-item.active { color: var(--p); }
         
-        #btnNotificar {
-            background: linear-gradient(135deg, #4CAF50, #2ecc71);
-            color: white;
-            margin-top: 20px;
-        }
-        
-        #btnInstalar {
-            background: linear-gradient(135deg, #2196F3, #21CBF3);
-            color: white;
-        }
-        
-        #status {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 10px;
-            background: #f9f9f9;
-            font-size: 0.9rem;
-        }
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="tela-login" id="telaLogin">
-    <h1>Nosso Mundo ❤️</h1>
-    
-    <button class="botao" id="btnGoogle" onclick="loginGoogle()">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" style="vertical-align: middle;">
-        Entrar com Google
-    </button>
-    
-    <div id="areaNick" style="display:none; margin:20px 0;">
-        <input type="text" id="inputNick" placeholder="Seu apelido" style="width:100%; padding:12px; border:2px solid #eee; border-radius:10px; margin-bottom:10px;">
-        <button class="botao" onclick="salvarNick()" style="background:#ff4f87; color:white;">Continuar</button>
+    <div id="login-screen">
+        <div class="login-card">
+            <h2 style="color: var(--p)">Nosso Mundo ❤️</h2>
+            <button id="btn-google" style="width:100%; padding:15px; border-radius:15px; background:white; border:1px solid #ddd; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Entrar com Google
+            </button>
+            
+            <div id="nickname-box" style="display:none; margin-top:20px;">
+                <input id="nickInput" placeholder="Teu apelido..." style="border: 1px solid #eee; width: 85%; margin-bottom:10px; border-radius:10px; padding: 12px;">
+                <button onclick="salvarNick()" style="background: var(--p); color:white; border:none; padding:12px; border-radius:10px; width:100%; font-weight:bold;">Entrar</button>
+            </div>
+        </div>
     </div>
-    
-    <button class="botao" id="btnNotificar" onclick="ativarNotificacoesSIMPLES()">
-        🔔 ATIVAR NOTIFICAÇÕES
-    </button>
-    
-    <div id="status">
-        Toque no botão acima para ativar
+
+    <div id="app-wrapper">
+        <header>
+            <div id="contador" style="font-weight:bold; color: var(--p);"></div>
+            <div id="status-online">● Online <span id="digitando-aviso"></span></div>
+        </header>
+
+        <div id="tab-chat" class="tab-content active-tab">
+            <div id="chatBox"></div>
+            <div class="input-container">
+                <div class="input-area">
+                    <input id="chatInput" placeholder="Mensagem..." oninput="emitirDigitando()">
+                    <button class="btn-circle" onclick="enviarChat()">✈</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-mural" class="tab-content">
+            <div id="muralBox" style="flex:1; overflow-y:auto"></div>
+            <div class="input-container">
+                <div class="input-area">
+                    <input id="muralInput" placeholder="Pensamento...">
+                    <button class="btn-circle" onclick="enviarMural()">✨</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-listas" class="tab-content" style="overflow-y:auto">
+            <div id="area-listas"></div>
+        </div>
+
+        <nav class="tab-bar">
+            <button class="tab-item active" onclick="mudarTab('chat', this)">💬<br>Chat</button>
+            <button class="tab-item" onclick="mudarTab('mural', this)">💭<br>Mural</button>
+            <button class="tab-item" onclick="mudarTab('listas', this)">📋<br>Listas</button>
+        </nav>
     </div>
-    
-    <button class="botao" id="btnInstalar" onclick="instalarPWA()" style="display:none; margin-top:15px;">
-        📲 INSTALAR APP
-    </button>
-</div>
 
 <script>
-// ==================== CONFIG FIREBASE (SÓ CHAT) ====================
-const firebaseConfig = {
-    apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
-    authDomain: "manuu-c23a7.firebaseapp.com",
-    databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
-    projectId: "manuu-c23a7",
-    storageBucket: "manuu-c23a7.firebasestorage.app",
-    messagingSenderId: "378235951611",
-    appId: "1:378235951611:web:72c855fbb5ccdb1a84535e"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
+        authDomain: "manuu-c23a7.firebaseapp.com",
+        databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
+        projectId: "manuu-c23a7",
+        storageBucket: "manuu-c23a7.firebasestorage.app",
+        messagingSenderId: "378235951611",
+        appId: "1:378235951611:web:72c855fbb5ccdb1a84535e"
+    };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
 
-let usuario = null;
-let meuNick = localStorage.getItem('meu_nick');
+    let user = null, myNick = localStorage.getItem('v3_nick');
 
-// ==================== FUNÇÃO QUE FUNCIONA MESMO ====================
-async function ativarNotificacoesSIMPLES() {
-    const status = document.getElementById('status');
-    
-    console.log('=== INICIANDO TESTE SIMPLES ===');
-    
-    // 1. PEDE PERMISSÃO (isso sempre funciona)
-    status.innerHTML = '⏳ Aguarde o pop-up do navegador...';
-    status.style.background = '#FFF3CD';
-    status.style.color = '#856404';
-    
-    const permissao = await Notification.requestPermission();
-    console.log('Usuário escolheu:', permissao);
-    
-    // 2. SE PERMITIU
-    if (permissao === 'granted') {
-        status.innerHTML = '✅ Permissão concedida! Enviando notificação...';
-        status.style.background = '#D4EDDA';
-        status.style.color = '#155724';
-        
-        // ESPERA 1 segundo
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // 3. MOSTRA NOTIFICAÇÃO (100% funciona se tem permissão)
-        try {
-            const notificacao = new Notification('🎉 CONSEGUIMOS!', {
-                body: 'Notificações ativadas com sucesso!',
-                icon: 'https://cdn-icons-png.flaticon.com/512/1077/1077114.png',
-                badge: 'https://cdn-icons-png.flaticon.com/512/1077/1077114.png',
-                vibrate: [200, 100, 200], // Vibra no celular
-                tag: 'sucesso',
-                requireInteraction: true // Fica na tela até clicar
+    // LOGIN
+    document.getElementById('btn-google').onclick = () => {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    };
+
+    auth.onAuthStateChanged(u => {
+        if(u) {
+            user = u;
+            if(!myNick) {
+                document.getElementById('btn-google').style.display = "none";
+                document.getElementById('nickname-box').style.display = "block";
+            } else { iniciar(); }
+        }
+    });
+
+    function salvarNick() {
+        const n = document.getElementById('nickInput').value.trim();
+        if(n) { myNick = n; localStorage.setItem('v3_nick', n); iniciar(); }
+    }
+
+    function iniciar() {
+        document.getElementById('login-screen').style.display = "none";
+        carregarDados();
+        const d1 = new Date("2025-02-26");
+        setInterval(() => {
+            const dias = Math.floor((new Date() - d1) / 86400000);
+            document.getElementById('contador').innerText = `❤️ ${dias} dias juntos`;
+        }, 1000);
+    }
+
+    function mudarTab(t, b) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-tab'));
+        document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('tab-' + t).classList.add('active-tab');
+        b.classList.add('active');
+        if(t === 'chat') chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function carregarDados() {
+        db.ref('chat_v3').on('value', s => {
+            chatBox.innerHTML = "";
+            s.forEach(child => {
+                const m = child.val();
+                const souEu = m.uid === user.uid;
+                chatBox.innerHTML += `<div class="msg ${souEu?'sent':'received'}"><b>${m.nick}</b><br>${m.txt}</div>`;
             });
-            
-            console.log('Notificação criada:', notificacao);
-            
-            status.innerHTML = '✅ NOTIFICAÇÃO ENVIADA! Olhe no topo da tela!';
-            
-            // Muda o botão
-            document.getElementById('btnNotificar').innerHTML = '🔔 NOTIFICAÇÕES ATIVADAS';
-            document.getElementById('btnNotificar').style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
-            
-        } catch (erro) {
-            console.error('Erro ao criar notificação:', erro);
-            status.innerHTML = '⚠️ Permissão OK, mas erro técnico. Recarregue a página.';
-        }
-        
-    } else {
-        // 4. SE NEGOU
-        status.innerHTML = '❌ Você negou a permissão. Para ativar depois:<br>' +
-                          'Chrome → ⋮ → Configurações → Notificações → Seu site → Permitir';
-        status.style.background = '#F8D7DA';
-        status.style.color = '#721C24';
-    }
-}
-
-// ==================== FUNÇÕES DE LOGIN ====================
-function loginGoogle() {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-}
-
-auth.onAuthStateChanged(user => {
-    if (user) {
-        usuario = user;
-        if (!meuNick) {
-            document.getElementById('areaNick').style.display = 'block';
-            document.getElementById('btnGoogle').style.display = 'none';
-        } else {
-            iniciarApp();
-        }
-    }
-});
-
-function salvarNick() {
-    const nick = document.getElementById('inputNick').value.trim();
-    if (nick) {
-        meuNick = nick;
-        localStorage.setItem('meu_nick', nick);
-        iniciarApp();
-    }
-}
-
-function iniciarApp() {
-    alert('App iniciado! Agora vamos focar só nas notificações primeiro.');
-}
-
-// ==================== INSTALAÇÃO PWA ====================
-let promptInstalacao;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    promptInstalacao = e;
-    document.getElementById('btnInstalar').style.display = 'block';
-});
-
-function instalarPWA() {
-    if (promptInstalacao) {
-        promptInstalacao.prompt();
-        promptInstalacao.userChoice.then(choice => {
-            if (choice.outcome === 'accepted') {
-                document.getElementById('status').innerHTML = '✅ App instalado!';
-            }
-            promptInstalacao = null;
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
     }
-}
 
-// ==================== TESTE AUTOMÁTICO ====================
-window.addEventListener('load', () => {
-    console.log('=== APP CARREGADO ===');
-    console.log('Notification.permission:', Notification.permission);
-    
-    // Se já tem permissão, mostra mensagem
-    if (Notification.permission === 'granted') {
-        document.getElementById('status').innerHTML = 
-            '✅ Notificações já estão ativadas! Toque no botão para testar.';
-        document.getElementById('btnNotificar').innerHTML = '🔔 TESTAR NOTIFICAÇÃO';
+    function enviarChat() {
+        const t = chatInput.value;
+        if(t) { db.ref('chat_v3').push({ uid: user.uid, nick: myNick, txt: t }); chatInput.value = ""; }
     }
-});
-</script>
 
+    function emitirDigitando() {
+        db.ref('status_v3/dig').set({ u: myNick, ativo: chatInput.value.length > 0 });
+    }
+
+    // Registo simples do Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+</script>
 </body>
 </html>
