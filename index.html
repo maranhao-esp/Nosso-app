@@ -245,7 +245,7 @@
     // Registra o service worker para push (deve estar na raiz)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        navigator.serviceWorker.register('firebase-messaging-sw.js')
           .then(reg => console.log('Service Worker FCM registrado:', reg))
           .catch(err => console.error('Erro no SW:', err));
       });
