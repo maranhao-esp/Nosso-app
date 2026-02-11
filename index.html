@@ -225,7 +225,15 @@
 
     // OneSignal - ativação de notificações
     function ativarNotificacoes() {
+  if (window.OneSignal && OneSignal.isInitialized) {
+    OneSignal.showSlidedownPrompt();
+  } else {
+    // Espera inicialização
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(OneSignal) {
       OneSignal.showSlidedownPrompt();
+    });
+  }
     }
 
     // Inicializa OneSignal
